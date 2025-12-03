@@ -609,9 +609,17 @@ const App = () => {
   };
 
   const handleAnalysis = async () => {
-    if (!process.env.API_KEY) {
-      setError("מפתח API חסר.");
-      return;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+if (!apiKey) {
+  setError("חסר מפתח API. ודא שהגדרת VITE_GEMINI_API_KEY ב-.env וב-Vercel.");
+  return;
+}
+
+try {
+  const ai = new GoogleGenAI({ apiKey });
+  // ...
+
     }
 
     if (!file && !prompt) {
