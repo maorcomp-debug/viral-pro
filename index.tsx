@@ -609,52 +609,50 @@ const App = () => {
   };
 
   const handleAnalysis = async () => {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  // 1. לקרוא את ה־API KEY מה־env
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-if (!apiKey) {
-  setError("חסר מפתח API. ודא שהגדרת VITE_GEMINI_API_KEY ב-.env וב-Vercel.");
-  return;
-}
+  // 2. בדיקה שיש API KEY
+  if (!apiKey) {
+    setError("חסר מפתח API. ודא שהגדרת VITE_GEMINI_API_KEY ב-.env וב-Vercel.");
+    return;
+  }
 
-try {
+  // 3. בדיקה שהמשתמש העלה וידאו או כתב טקסט
+  if (!file && !prompt) {
+    setError("או העלה וידאו/תמונה או כתוב טקסט כדי להמשיך.");
+    return;
+  }
+
+  // 4. הכנות לפני הקריאה ל-AI
+  setLoading(true);
+  setResult(null);
+  setError("");
+
+  // 5. יצירת ה-client של Gemini פעם אחת, בלי try/catch ובלי process.env
   const ai = new GoogleGenAI({ apiKey });
-  // ...
 
+  // 6. מכאן והלאה – תשאיר את הקוד המקורי שלך כמו שהיה
+  const parts: any[] = [];
+
+  if (file) {
+    if (file.size > 20 * 1024 * 1024) {
+      throw new Error("הקובץ גדול מדי (מעל 20MB).");
     }
+    const filePart = await fileToGenerativePart(file);
+    parts.push(filePart);
+  }
 
-    if (!file && !prompt) {
-      setError("אנא העלה וידאו/תמונה או כתוב טקסט כדי להתחיל.");
-      return;
-    }
+  const userPrompt = prompt || "אם אין טקסט – אתה תכתוב לפי הקובץ בלבד.";
+  parts.push({ text: userPrompt });
 
-    setLoading(true);
-    setResult(null);
-    setError("");
-
-    try {
-      const ai = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY
- });
-      
-      const parts: any[] = [];
-      
-      if (file) {
-        if (file.size > 20 * 1024 * 1024) {
-           throw new Error("קובץ גדול מדי (מקסימום 20MB לגרסת הדמו).");
-        }
-        const filePart = await fileToGenerativePart(file);
-        parts.push(filePart);
-      }
-
-      const userPrompt = prompt || "אנא נתח את הקובץ לפי הפורמט המלא שלך.";
-      parts.push({ text: userPrompt });
-
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: { parts: parts },
-        config: {
-          systemInstruction: SYSTEM_PROMPT,
-          responseMimeType: "application/json",
-          thinkingConfig: { thinkingBudget: 0 } 
+  const response = await ai.models.generateContent({
+    model: "gemini-2.5-flash",
+    contents: [{ parts }],
+    config: {
+      systemInstruction: SYSTEM_PROMPT,
+      responseMimeType: "application/json",
+      thinkingConfig: { thinkingBudget: 0 },
         }
       });
       
