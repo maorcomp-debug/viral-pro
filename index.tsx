@@ -624,7 +624,7 @@ const App = () => {
     setError("");
 
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       
       const parts: any[] = [];
       
